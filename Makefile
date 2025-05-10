@@ -47,7 +47,7 @@ docker_run:
 
 ./bin/StealthIMUser.docker.zst: $(GO_FILES) proto
 	docker-compose build
-	docker save StealthIMUser-app > ./bin/StealthIMUser.docker
+	docker save stealthimuser-app > ./bin/StealthIMUser.docker
 	zstd ./bin/StealthIMUser.docker -19
 	@rm ./bin/StealthIMUser.docker
 
