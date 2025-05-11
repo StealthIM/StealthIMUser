@@ -1,8 +1,8 @@
-# StealthIM Session
+# StealthIM User
 
-Session ID 管理 `0.0.1`
+用户管理 `0.0.1`
 
-> `.proto` 文件：`./proto/session.proto`
+> `.proto` 文件：`./proto/user.proto`
 
 ## 构建
 
@@ -41,10 +41,5 @@ make clean # 清理
 ## 配置
 
 默认会读取当前文件夹 `config.toml` 文件（不存在会自动生成模板）
-
-默认配置：
-
-```toml
-```
 
 也可使用 `--config={PATH}` 参数指定配置文件路径
