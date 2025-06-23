@@ -1644,3 +1644,102 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 		},
 	}, nil
 }
+
+func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDRequest) (*pb.GetUsernameByUIDResponse, error) {
+	if config.LatestConfig.GRPCProxy.Log {
+		log.Println("[GRPC] Call GetUIDByUsernameRequest")
+	}
+
+	// 检查用户是否存在
+	userInfoCache, _ := gateway.GetUserInfoCache(req.UserId)
+	if userInfoCache != nil {
+		if userInfoCache.UserId == -1 {
+			return &pb.GetUsernameByUIDResponse{
+				Result: &pb.Result{
+					Code: 1,
+					Msg:  "User does not exist",
+				},
+			}, nil
+		}
+		return &pb.GetUsernameByUIDResponse{
+			Result: &pb.Result{
+				Code: 0,
+				Msg:  "",
+			},
+			Username: userInfoCache.Username,
+		}, nil
+	}
+	// 查询用户信息
+	sqlReq := &pbdb.SqlRequest{
+		Sql: sqlHelper.GetUserInfoSQL,
+		Db:  pbdb.SqlDatabases_Users,
+		Params: []*pbdb.InterFaceType{
+			{Response: &pbdb.InterFaceType_Int32{Int32: req.UserId}},
+		},
+	}
+
+	resp, err := gateway.ExecSQL(sqlReq)
+	if err != nil {
+		return &pb.GetUsernameByUIDResponse{
+			Result: &pb.Result{
+				Code: 2,
+				Msg:  "Interal error",
+			},
+		}, nil
+	}
+
+	// 检查SQL执行结果
+	if resp.Result.Code != 0 {
+		return &pb.GetUsernameByUIDResponse{
+			Result: &pb.Result{
+				Code: 3,
+				Msg:  "Internal error",
+			},
+		}, nil
+	}
+
+	// 检查用户是否存在
+	if len(resp.Data) == 0 {
+		return &pb.GetUsernameByUIDResponse{
+			Result: &pb.Result{
+				Code: 1,
+				Msg:  "User does not exist",
+			},
+		}, nil
+	}
+
+	// 获取用户信息
+	userData := resp.Data[0].Result
+
+	// 构建用户信息
+	userid := userData[0].GetInt32()
+	userInfo := &pb.UserInfo{
+		Username:    userData[1].GetStr(),
+		Nickname:    userData[2].GetStr(),
+		LoginLevel:  userData[3].GetInt32(),
+		Email:       userData[4].GetStr(),
+		PhoneNumber: userData[5].GetStr(),
+		CreateTime:  userData[6].GetStr(),
+		Vip:         userData[7].GetInt32(),
+	}
+
+	// 写入缓存
+	userInfoCache = &pb.UserInfoCache{
+		Username:    userInfo.Username,
+		Nickname:    userInfo.Nickname,
+		LoginLevel:  userInfo.LoginLevel,
+		Email:       userInfo.Email,
+		PhoneNumber: userInfo.PhoneNumber,
+		CreateTime:  userInfo.CreateTime,
+		Vip:         userInfo.Vip,
+	}
+
+	go gateway.SetUserInfoCache(userid, userInfoCache)
+	return &pb.GetUsernameByUIDResponse{
+		Result: &pb.Result{
+			Code: 0,
+			Msg:  "",
+		},
+		Username: userInfo.Username,
+	}, nil
+}
