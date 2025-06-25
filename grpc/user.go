@@ -1647,7 +1647,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 
 func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDRequest) (*pb.GetUsernameByUIDResponse, error) {
 	if config.LatestConfig.GRPCProxy.Log {
-		log.Println("[GRPC] Call GetUIDByUsernameRequest")
+		log.Println("[GRPC] Call GetUsernameByUIDRequest")
 	}
 
 	// 检查用户是否存在
@@ -1741,5 +1741,104 @@ func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDR
 			Msg:  "",
 		},
 		Username: userInfo.Username,
+	}, nil
+}
+
+func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameRequest) (*pb.GetUIDByUsernameResponse, error) {
+	if config.LatestConfig.GRPCProxy.Log {
+		log.Println("[GRPC] Call GetUIDByUsernameRequest")
+	}
+
+	// 先尝试从缓存获取登录信息
+	loginCache, _ := gateway.GetUserLoginCache(req.Username)
+
+	if loginCache != nil {
+		if loginCache.UserId < 0 {
+			return &pb.GetUIDByUsernameResponse{
+				Result: &pb.Result{
+					Code: 1,
+					Msg:  "User does not exist",
+				},
+			}, nil
+		}
+		// 使用缓存的登录信息
+		userID := loginCache.UserId
+		return &pb.GetUIDByUsernameResponse{
+			Result: &pb.Result{
+				Code: 0,
+				Msg:  "",
+			},
+			UserId: userID,
+		}, nil
+	}
+	// 从数据库查询用户
+	sqlReq := &pbdb.SqlRequest{
+		Sql: sqlHelper.CheckUserSQL,
+		Db:  pbdb.SqlDatabases_Users,
+		Params: []*pbdb.InterFaceType{
+			{Response: &pbdb.InterFaceType_Str{Str: req.Username}},
+		},
+	}
+
+	resp, err := gateway.ExecSQL(sqlReq)
+	if err != nil {
+		return &pb.GetUIDByUsernameResponse{
+			Result: &pb.Result{
+				Code: 2,
+				Msg:  "Internal error",
+			},
+		}, nil
+	}
+
+	// 检查SQL执行结果
+	if resp.Result.Code != 0 {
+		return &pb.GetUIDByUsernameResponse{
+			Result: &pb.Result{
+				Code: 3,
+				Msg:  resp.Result.Msg,
+			},
+		}, nil
+	}
+
+	// 检查用户是否存在
+	if len(resp.Data) == 0 {
+		// 更新缓存
+		userInfoCache := &pb.UserInfoCache{
+			UserId: -1,
+		}
+		go gateway.SetUserInfoCache(userInfoCache.UserId, userInfoCache)
+		return &pb.GetUIDByUsernameResponse{
+			Result: &pb.Result{
+				Code: 4,
+				Msg:  "User does not exist or has been disabled",
+			},
+		}, nil
+	}
+
+	// 获取用户数据
+	userData := resp.Data[0].Result
+
+	// 获取密码信息
+	userID := userData[0].GetInt32()
+	hashedPassword := userData[3].GetStr()
+	salt := userData[4].GetStr()
+	loginLevel := userData[5].GetInt32()
+
+	// 更新登录缓存
+	loginCache = &pb.UserLoginCache{
+		UserId:     userID,
+		Username:   req.Username,
+		Password:   hashedPassword,
+		Salt:       salt,
+		LoginLevel: loginLevel,
+	}
+
+	go gateway.SetUserLoginCache(loginCache)
+	return &pb.GetUIDByUsernameResponse{
+		Result: &pb.Result{
+			Code: 0,
+			Msg:  "",
+		},
+		UserId: userID,
 	}, nil
 }
