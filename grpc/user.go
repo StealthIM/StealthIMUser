@@ -166,13 +166,16 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 
 			go gateway.SetUserLoginCache(loginCache)
 
-			return &pb.RegisterResponse{
-				Result: &pb.Result{
-					Code: 6,
-					Msg:  "User already exists",
-				},
-			}, nil
+			if true {
+				break
+			}
 		}
+		return &pb.RegisterResponse{
+			Result: &pb.Result{
+				Code: 6,
+				Msg:  "User already exists",
+			},
+		}, nil
 	}
 
 	// 生成盐值和加密密码
@@ -324,11 +327,12 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		// 检查用户状态
 		if loginLevel != 0 {
 			var msg string
-			if loginLevel == 1 {
+			switch loginLevel {
+			case 1:
 				msg = "Account has been logged out"
-			} else if loginLevel == 2 {
+			case 2:
 				msg = "Account has been banned"
-			} else {
+			default:
 				msg = "Account status abnormal"
 			}
 			return &pb.LoginResponse{
@@ -417,11 +421,12 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		// 检查用户状态
 		if loginLevel != 0 {
 			var msg string
-			if loginLevel == 1 {
+			switch loginLevel {
+			case 1:
 				msg = "Account has been logged out"
-			} else if loginLevel == 2 {
+			case 2:
 				msg = "Account has been banned"
-			} else {
+			default:
 				msg = "Account status abnormal"
 			}
 			return &pb.LoginResponse{
@@ -637,7 +642,10 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 			}
 
 			go gateway.SetUserInfoCache(userid, userInfoCache)
-			break
+
+			if true {
+				break
+			}
 		}
 	}
 
@@ -888,11 +896,12 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		// 检查用户状态
 		if loginLevel != 0 {
 			var msg string
-			if loginLevel == 1 {
+			switch loginLevel {
+			case 1:
 				msg = "Account has been logged out"
-			} else if loginLevel == 2 {
+			case 2:
 				msg = "Account has been banned"
-			} else {
+			default:
 				msg = "Account status abnormal"
 			}
 			return &pb.GetOtherUserInfoResponse{
@@ -970,11 +979,12 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		// 检查用户状态
 		if loginLevel != 0 {
 			var msg string
-			if loginLevel == 1 {
+			switch loginLevel {
+			case 1:
 				msg = "Account has been logged out"
-			} else if loginLevel == 2 {
+			case 2:
 				msg = "Account has been banned"
-			} else {
+			default:
 				msg = "Account status abnormal"
 			}
 			return &pb.GetOtherUserInfoResponse{
