@@ -26,6 +26,31 @@ from session_pb2 import (
     GetRequest, GetResponse,
 )
 
+# 定义错误码常量，与Go语言的errorcode包保持一致
+
+
+class ErrorCode:
+    # 8xx 成功
+    Success = 800
+
+    # 9xx 通用错误
+    ServerFailed = 900
+    ServerRefused = 901
+    ServerInternalComponentError = 902
+    ServerInternalNetworkError = 903
+    ServerOverload = 904
+    ServerLimited = 905
+    ServerError = 906
+
+    # 12xx 用户错误
+    UserInternalError = 1200
+    UserNotFound = 1201
+    UserAlreadyExists = 1202
+    UserPasswordError = 1203
+    UserPermissionDenied = 1204
+    UserInvalidParameter = 1205
+
+
 fakeuser = f"testuser_{int(time.time())}"
 userid = 0
 
@@ -71,7 +96,7 @@ async def test_register(stub: StealthIMUserStub) -> None:
         phone_number="1234567890"
     )
     response: RegisterResponse = await stub.Register(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
 
 
 @pytest.mark.asyncio
@@ -83,14 +108,14 @@ async def test_login(stub: StealthIMUserStub, session: StealthIMSessionStub) -> 
         password="password123"
     )
     response: LoginResponse = await stub.Login(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
     assert response.session != ""
     assert response.user_info.username == fakeuser
     assert response.user_info.nickname != ""
     await asyncio.sleep(0.5)
     request: GetRequest = GetRequest(session=response.session)
     response: GetResponse = await session.Get(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
     userid = response.uid
     # 验证用户ID是否大于等于0
     assert userid >= 0
@@ -101,7 +126,7 @@ async def test_get_user_info(stub: StealthIMUserStub) -> None:
     """测试GetUserInfo方法"""
     request: GetUserInfoRequest = GetUserInfoRequest(user_id=userid)
     response: GetUserInfoResponse = await stub.GetUserInfo(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
     assert response.user_info.username != ""
     assert response.user_info.nickname != ""
 
@@ -112,7 +137,7 @@ async def test_get_other_user_info(stub: StealthIMUserStub) -> None:
     request: GetOtherUserInfoRequest = GetOtherUserInfoRequest(
         username=fakeuser)
     response: GetOtherUserInfoResponse = await stub.GetOtherUserInfo(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
     assert response.user_info.nickname != ""
 
 
@@ -125,12 +150,12 @@ async def test_change_nickname(stub: StealthIMUserStub) -> None:
         new_nickname=new_nickname
     )
     response: ChangeNicknameResponse = await stub.ChangeNickname(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
 
     # 验证昵称是否已更改
     info_request: GetUserInfoRequest = GetUserInfoRequest(user_id=userid)
     info_response: GetUserInfoResponse = await stub.GetUserInfo(info_request)
-    assert info_response.result.code == 0
+    assert info_response.result.code == ErrorCode.Success
     assert info_response.user_info.nickname == new_nickname
 
 
@@ -143,12 +168,12 @@ async def test_change_email(stub: StealthIMUserStub) -> None:
         new_email=new_email
     )
     response: ChangeEmailResponse = await stub.ChangeEmail(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
 
     # 验证邮箱是否已更改
     info_request: GetUserInfoRequest = GetUserInfoRequest(user_id=userid)
     info_response: GetUserInfoResponse = await stub.GetUserInfo(info_request)
-    assert info_response.result.code == 0
+    assert info_response.result.code == ErrorCode.Success
     assert info_response.user_info.email == new_email
 
 
@@ -161,12 +186,12 @@ async def test_change_phone_number(stub: StealthIMUserStub) -> None:
         new_phone_number=new_phone
     )
     response: ChangePhoneNumberResponse = await stub.ChangePhoneNumber(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
 
     # 验证手机号是否已更改
     info_request: GetUserInfoRequest = GetUserInfoRequest(user_id=userid)
     info_response: GetUserInfoResponse = await stub.GetUserInfo(info_request)
-    assert info_response.result.code == 0
+    assert info_response.result.code == ErrorCode.Success
     assert info_response.user_info.phone_number == new_phone
 
 
@@ -179,7 +204,7 @@ async def test_change_password(stub: StealthIMUserStub) -> None:
         new_password=new_password
     )
     response: ChangePasswordResponse = await stub.ChangePassword(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
     await asyncio.sleep(0.5)
 
     # 使用新密码登录验证密码是否已更改
@@ -188,7 +213,7 @@ async def test_change_password(stub: StealthIMUserStub) -> None:
         password=new_password
     )
     login_response: LoginResponse = await stub.Login(login_request)
-    assert login_response.result.code == 0
+    assert login_response.result.code == ErrorCode.Success
     assert login_response.session != ""
 
 
@@ -197,7 +222,7 @@ async def test_logout(stub: StealthIMUserStub) -> None:
     """测试Logout方法"""
     request: LogoutRequest = LogoutRequest(user_id=userid)
     response: LogoutResponse = await stub.Logout(request)
-    assert response.result.code == 0
+    assert response.result.code == ErrorCode.Success
 
 
 # 以下是额外的测试用例
@@ -215,7 +240,7 @@ async def test_register_duplicate_username(stub: StealthIMUserStub) -> None:
     )
     response: RegisterResponse = await stub.Register(request)
     # 应该返回错误码，表示用户名已存在
-    assert response.result.code != 0
+    assert response.result.code == ErrorCode.UserAlreadyExists
 
 
 @pytest.mark.asyncio
@@ -227,7 +252,7 @@ async def test_login_wrong_password(stub: StealthIMUserStub) -> None:
     )
     response: LoginResponse = await stub.Login(request)
     # 应该返回错误码，表示密码错误
-    assert response.result.code != 0
+    assert response.result.code == ErrorCode.UserPasswordError
 
 
 @pytest.mark.asyncio
@@ -240,7 +265,7 @@ async def test_login_nonexistent_user(stub: StealthIMUserStub) -> None:
     )
     response: LoginResponse = await stub.Login(request)
     # 应该返回错误码，表示用户不存在
-    assert response.result.code != 0
+    assert response.result.code == ErrorCode.UserNotFound
 
 
 @pytest.mark.asyncio
@@ -250,7 +275,7 @@ async def test_get_user_info_invalid_id(stub: StealthIMUserStub) -> None:
     request: GetUserInfoRequest = GetUserInfoRequest(user_id=invalid_id)
     response: GetUserInfoResponse = await stub.GetUserInfo(request)
     # 应该返回错误码，表示用户ID无效
-    assert response.result.code != 0
+    assert response.result.code == ErrorCode.UserInvalidParameter
 
 
 @pytest.mark.asyncio
@@ -261,7 +286,7 @@ async def test_get_other_user_info_nonexistent(stub: StealthIMUserStub) -> None:
         username=nonexistent_user)
     response: GetOtherUserInfoResponse = await stub.GetOtherUserInfo(request)
     # 应该返回错误码，表示用户不存在
-    assert response.result.code != 0
+    assert response.result.code == ErrorCode.UserNotFound
 
 
 @pytest.mark.asyncio
@@ -283,7 +308,7 @@ async def test_multiple_user_operations(stub: StealthIMUserStub, session: Stealt
             phone_number=f"123456789{i}"
         )
         register_response = await stub.Register(register_request)
-        assert register_response.result.code == 0
+        assert register_response.result.code == ErrorCode.Success
 
         # 登录
         login_request = LoginRequest(
@@ -291,13 +316,13 @@ async def test_multiple_user_operations(stub: StealthIMUserStub, session: Stealt
             password="Password123."
         )
         login_response = await stub.Login(login_request)
-        assert login_response.result.code == 0
+        assert login_response.result.code == ErrorCode.Success
 
         # 获取用户ID
         get_request = GetRequest(session=login_response.session)
         await asyncio.sleep(0.5)
         get_response = await session.Get(get_request)
-        assert get_response.result.code == 0
+        assert get_response.result.code == ErrorCode.Success
         user_id = get_response.uid
         user_ids.append(user_id)
 
@@ -311,12 +336,12 @@ async def test_multiple_user_operations(stub: StealthIMUserStub, session: Stealt
             new_nickname=new_nickname
         )
         nickname_response = await stub.ChangeNickname(nickname_request)
-        assert nickname_response.result.code == 0
+        assert nickname_response.result.code == ErrorCode.Success
 
         # 登出
         logout_request = LogoutRequest(user_id=user_id)
         logout_response = await stub.Logout(logout_request)
-        assert logout_response.result.code == 0
+        assert logout_response.result.code == ErrorCode.Success
 
     # 验证所有用户ID都不同
     assert len(set(user_ids)) == 3

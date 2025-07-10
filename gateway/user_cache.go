@@ -3,6 +3,7 @@ package gateway
 import (
 	pbdb "StealthIMUser/StealthIM.DBGateway"
 	pb "StealthIMUser/StealthIM.User"
+	errorcode "StealthIMUser/errorcode"
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
@@ -30,7 +31,7 @@ func SetUserInfoCache(rUserID int32, info *pb.UserInfoCache) error {
 		return err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return fmt.Errorf("redis error: %s", resp.Result.Msg)
 	}
 
@@ -51,7 +52,7 @@ func GetUserInfoCache(userID int32) (*pb.UserInfoCache, error) {
 		return nil, err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		if resp.Result.Code == 404 {
 			// Cache miss
 			return nil, nil
@@ -94,7 +95,7 @@ func SetUserPublicCache(info *pb.UserPublicCache) error {
 		return err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return fmt.Errorf("redis error: %s", resp.Result.Msg)
 	}
 
@@ -115,7 +116,7 @@ func GetUserPublicCache(userID int32) (*pb.UserPublicCache, error) {
 		return nil, err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		if resp.Result.Code == 404 {
 			// Cache miss
 			return nil, nil
@@ -158,7 +159,7 @@ func SetUserLoginCache(info *pb.UserLoginCache) error {
 		return err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return fmt.Errorf("redis error: %s", resp.Result.Msg)
 	}
 
@@ -179,7 +180,7 @@ func GetUserLoginCache(username string) (*pb.UserLoginCache, error) {
 		return nil, err
 	}
 
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		if resp.Result.Code == 404 {
 			// Cache miss
 			return nil, nil

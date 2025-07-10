@@ -3,6 +3,7 @@ package grpc
 import (
 	pb "StealthIMUser/StealthIM.User"
 	"StealthIMUser/config"
+	"StealthIMUser/errorcode"
 	"StealthIMUser/gateway"
 	"StealthIMUser/session"
 	sqlHelper "StealthIMUser/sql"
@@ -64,7 +65,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if req.Username == "" || req.Password == "" || req.Nickname == "" {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username, password, or nickname cannot be empty",
 			},
 		}, nil
@@ -73,7 +74,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if len(req.Username) < 3 || len(req.Username) > 20 {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username length must be between 3 and 20 characters",
 			},
 		}, nil
@@ -81,7 +82,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if !isValidUsername(req.Username) {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username can only contain numbers, letters, and underscores",
 			},
 		}, nil
@@ -89,7 +90,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if len(req.Password) < 6 || len(req.Password) > 20 {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 4,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password length must be between 6 and 20 characters",
 			},
 		}, nil
@@ -97,7 +98,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if !isValidPassword(req.Password) {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character",
 			},
 		}, nil
@@ -110,7 +111,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 		if loginCache.UserId >= 0 {
 			return &pb.RegisterResponse{
 				Result: &pb.Result{
-					Code: 6,
+					Code: errorcode.UserAlreadyExists,
 					Msg:  "User already exists",
 				},
 			}, nil
@@ -132,7 +133,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 			}
 
 			// 检查SQL执行结果
-			if resp.Result.Code != 0 {
+			if resp.Result.Code != errorcode.Success {
 				break
 			}
 
@@ -172,7 +173,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 		}
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.UserAlreadyExists,
 				Msg:  "User already exists",
 			},
 		}, nil
@@ -201,17 +202,17 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	if err != nil {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  "Internal error",
 			},
 		}, nil
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.RegisterResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -237,7 +238,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	// 返回结果
 	return &pb.RegisterResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -252,7 +253,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if req.Username == "" || req.Password == "" {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username or password cannot be empty",
 			},
 		}, nil
@@ -261,7 +262,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if len(req.Username) < 3 || len(req.Username) > 20 {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username length must be between 3 and 20 characters",
 			},
 		}, nil
@@ -269,7 +270,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if !isValidUsername(req.Username) {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username can only contain numbers, letters, and underscores",
 			},
 		}, nil
@@ -277,7 +278,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if len(req.Password) < 6 || len(req.Password) > 20 {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 4,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password length must be between 6 and 20 characters",
 			},
 		}, nil
@@ -285,7 +286,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if !isValidPassword(req.Password) {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character",
 			},
 		}, nil
@@ -302,7 +303,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if loginCache.UserId < 0 {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -318,7 +319,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if inputHash != hashedPassword {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 6,
+					Code: errorcode.UserPasswordError,
 					Msg:  "Incorrect password",
 				},
 			}, nil
@@ -337,7 +338,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 			}
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 5,
+					Code: errorcode.UserPermissionDenied,
 					Msg:  msg,
 				},
 			}, nil
@@ -356,17 +357,17 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if err != nil {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 6,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if resp.Result.Code != 0 {
+		if resp.Result.Code != errorcode.Success {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 8,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  resp.Result.Msg,
 				},
 			}, nil
@@ -381,7 +382,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 			go gateway.SetUserInfoCache(userInfoCache.UserId, userInfoCache)
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist or has been disabled",
 				},
 			}, nil
@@ -412,7 +413,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if inputHash != hashedPassword {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 7,
+					Code: errorcode.UserPasswordError,
 					Msg:  "Incorrect password",
 				},
 			}, nil
@@ -431,7 +432,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 			}
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserPermissionDenied,
 					Msg:  msg,
 				},
 			}, nil
@@ -448,7 +449,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 			if err != nil {
 				return ""
 			}
-			if resp.Result.Code != 0 {
+			if resp.Result.Code != errorcode.Success {
 				return ""
 			}
 			return resp.Session
@@ -465,7 +466,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if userInfoCache.UserId == -1 {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist or has been disabled",
 				},
 			}, nil
@@ -494,17 +495,17 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 		if err != nil {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 7,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if infoResp.Result.Code != 0 || len(infoResp.Data) == 0 {
+		if infoResp.Result.Code != errorcode.Success || len(infoResp.Data) == 0 {
 			return &pb.LoginResponse{
 				Result: &pb.Result{
-					Code: 7,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
@@ -543,7 +544,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	if session == "" {
 		return &pb.LoginResponse{
 			Result: &pb.Result{
-				Code: 7,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  "Session Internal error",
 			},
 		}, nil
@@ -552,7 +553,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	// 返回结果
 	return &pb.LoginResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 		Session:  session,
@@ -569,7 +570,7 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 	if req.UserId < 0 {
 		return &pb.LogoutResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Invalid user ID",
 			},
 		}, nil
@@ -581,7 +582,7 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 		if userInfoCache.UserId == -1 {
 			return &pb.LogoutResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -603,13 +604,13 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 			}
 
 			// 检查SQL执行结果
-			if infoResp.Result.Code != 0 || len(infoResp.Data) == 0 {
+			if infoResp.Result.Code != errorcode.Success || len(infoResp.Data) == 0 {
 				go gateway.SetUserInfoCache(req.UserId, &pb.UserInfoCache{
 					UserId: -1,
 				})
 				return &pb.LogoutResponse{
 					Result: &pb.Result{
-						Code: 2,
+						Code: errorcode.UserNotFound,
 						Msg:  "User does not exist",
 					},
 				}, nil
@@ -665,17 +666,17 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 	if err != nil {
 		return &pb.LogoutResponse{
 			Result: &pb.Result{
-				Code: 4,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  "Internal error",
 			},
 		}, nil
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.LogoutResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -685,7 +686,7 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 	if resp.RowsAffected == 0 {
 		return &pb.LogoutResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserNotFound,
 				Msg:  "User does not exist",
 			},
 		}, nil
@@ -705,7 +706,7 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 		}
 
 		nameResp, err := gateway.ExecSQL(nameReq)
-		if err == nil && nameResp.Result.Code == 0 && len(nameResp.Data) > 0 {
+		if err == nil && nameResp.Result.Code == errorcode.Success && len(nameResp.Data) > 0 {
 			username := nameResp.Data[0].Result[0].GetStr()
 			if username != "" {
 				err = gateway.DeleteUserLoginCache(username)
@@ -716,7 +717,7 @@ func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 	// 返回结果
 	return &pb.LogoutResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -731,7 +732,7 @@ func (s *server) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*
 	if req.UserId <= 0 {
 		return &pb.GetUserInfoResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "UserID not found",
 			},
 		}, nil
@@ -747,7 +748,7 @@ func (s *server) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*
 		if userInfoCache.UserId == -1 {
 			return &pb.GetUserInfoResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -775,17 +776,17 @@ func (s *server) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*
 		if err != nil {
 			return &pb.GetUserInfoResponse{
 				Result: &pb.Result{
-					Code: 4,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if resp.Result.Code != 0 {
+		if resp.Result.Code != errorcode.Success {
 			return &pb.GetUserInfoResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  resp.Result.Msg,
 				},
 			}, nil
@@ -795,7 +796,7 @@ func (s *server) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*
 		if len(resp.Data) == 0 {
 			return &pb.GetUserInfoResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserNotFound,
 					Msg:  "User not found",
 				},
 			}, nil
@@ -833,7 +834,7 @@ func (s *server) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*
 	// 返回结果
 	return &pb.GetUserInfoResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 		UserInfo: userInfo,
@@ -848,7 +849,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 	if req.Username == "" {
 		return &pb.GetOtherUserInfoResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username cannot be empty",
 			},
 		}, nil
@@ -857,7 +858,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 	if len(req.Username) < 3 || len(req.Username) > 20 {
 		return &pb.GetOtherUserInfoResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username length must be between 3 and 20 characters",
 			},
 		}, nil
@@ -865,7 +866,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 	if !isValidUsername(req.Username) {
 		return &pb.GetOtherUserInfoResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Username can only contain numbers, letters, and underscores",
 			},
 		}, nil
@@ -882,7 +883,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		if loginCache.UserId < 0 {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -906,7 +907,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 			}
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 5,
+					Code: errorcode.UserPermissionDenied,
 					Msg:  msg,
 				},
 			}, nil
@@ -925,17 +926,17 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		if err != nil {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 6,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if resp.Result.Code != 0 {
+		if resp.Result.Code != errorcode.Success {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 8,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  resp.Result.Msg,
 				},
 			}, nil
@@ -950,7 +951,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 			go gateway.SetUserInfoCache(userInfoCache.UserId, userInfoCache)
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist or has been disabled",
 				},
 			}, nil
@@ -989,7 +990,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 			}
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 9,
+					Code: errorcode.UserPermissionDenied,
 					Msg:  msg,
 				},
 			}, nil
@@ -1005,7 +1006,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		if userPublicCache.UserId == -1 {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist or has been disabled",
 				},
 			}, nil
@@ -1029,17 +1030,17 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		if err != nil {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 4,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if resp.Result.Code != 0 {
+		if resp.Result.Code != errorcode.Success {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  resp.Result.Msg,
 				},
 			}, nil
@@ -1049,7 +1050,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 		if len(resp.Data) == 0 {
 			return &pb.GetOtherUserInfoResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist or has been disabled",
 				},
 			}, nil
@@ -1089,7 +1090,7 @@ func (s *server) GetOtherUserInfo(ctx context.Context, req *pb.GetOtherUserInfoR
 	// 返回结果
 	return &pb.GetOtherUserInfoResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 		UserInfo: userInfo,
@@ -1106,7 +1107,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	if req.UserId <= 0 {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Invalid user ID",
 			},
 		}, nil
@@ -1115,7 +1116,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	if req.NewPassword == "" {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password cannot be empty",
 			},
 		}, nil
@@ -1124,7 +1125,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	if len(req.NewPassword) < 6 || len(req.NewPassword) > 20 {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password length must be between 6 and 20 characters",
 			},
 		}, nil
@@ -1133,7 +1134,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	if !isValidPassword(req.NewPassword) {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 4,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character",
 			},
 		}, nil
@@ -1146,7 +1147,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 		if userInfoCache.UserId == -1 {
 			return &pb.ChangePasswordResponse{
 				Result: &pb.Result{
-					Code: 5,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1166,20 +1167,20 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 		if err != nil {
 			return &pb.ChangePasswordResponse{
 				Result: &pb.Result{
-					Code: 6,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if resp.Result.Code != 0 || len(resp.Data) == 0 {
+		if resp.Result.Code != errorcode.Success || len(resp.Data) == 0 {
 			go gateway.SetUserInfoCache(req.UserId, &pb.UserInfoCache{
 				UserId: -1,
 			})
 			return &pb.ChangePasswordResponse{
 				Result: &pb.Result{
-					Code: 5,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1242,10 +1243,10 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -1255,7 +1256,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	if resp.RowsAffected == 0 {
 		return &pb.ChangePasswordResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.UserInternalError,
 				Msg:  "Failed to update password",
 			},
 		}, nil
@@ -1267,7 +1268,7 @@ func (s *server) ChangePassword(ctx context.Context, req *pb.ChangePasswordReque
 	// 返回结果
 	return &pb.ChangePasswordResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -1283,7 +1284,7 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 	if req.UserId <= 0 {
 		return &pb.ChangeNicknameResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Invalid user ID",
 			},
 		}, nil
@@ -1292,7 +1293,7 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 	if req.NewNickname == "" {
 		return &pb.ChangeNicknameResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Nickname cannot be empty",
 			},
 		}, nil
@@ -1304,7 +1305,7 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 		if userInfoCache.UserId == -1 {
 			return &pb.ChangeNicknameResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1323,20 +1324,20 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 		if err != nil {
 			return &pb.ChangeNicknameResponse{
 				Result: &pb.Result{
-					Code: 4,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if infoResp.Result.Code != 0 || len(infoResp.Data) == 0 {
+		if infoResp.Result.Code != errorcode.Success || len(infoResp.Data) == 0 {
 			go gateway.SetUserInfoCache(req.UserId, &pb.UserInfoCache{
 				UserId: -1,
 			})
 			return &pb.ChangeNicknameResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1366,10 +1367,10 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.ChangeNicknameResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -1379,7 +1380,7 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 	if resp.RowsAffected == 0 {
 		return &pb.ChangeNicknameResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.UserInternalError,
 				Msg:  "Failed to update nickname",
 			},
 		}, nil
@@ -1391,7 +1392,7 @@ func (s *server) ChangeNickname(ctx context.Context, req *pb.ChangeNicknameReque
 	// 返回结果
 	return &pb.ChangeNicknameResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -1407,7 +1408,7 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 	if req.UserId <= 0 {
 		return &pb.ChangeEmailResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Invalid user ID",
 			},
 		}, nil
@@ -1420,7 +1421,7 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 		if err != nil || !matched {
 			return &pb.ChangeEmailResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserInvalidParameter,
 					Msg:  "Invalid email format",
 				},
 			}, nil
@@ -1433,7 +1434,7 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 		if userInfoCache.UserId == -1 {
 			return &pb.ChangeEmailResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1452,20 +1453,20 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 		if err != nil {
 			return &pb.ChangeEmailResponse{
 				Result: &pb.Result{
-					Code: 4,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if infoResp.Result.Code != 0 || len(infoResp.Data) == 0 {
+		if infoResp.Result.Code != errorcode.Success || len(infoResp.Data) == 0 {
 			go gateway.SetUserInfoCache(req.UserId, &pb.UserInfoCache{
 				UserId: -1,
 			})
 			return &pb.ChangeEmailResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1495,10 +1496,10 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.ChangeEmailResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -1508,7 +1509,7 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 	if resp.RowsAffected == 0 {
 		return &pb.ChangeEmailResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.UserInternalError,
 				Msg:  "Failed to update email",
 			},
 		}, nil
@@ -1520,7 +1521,7 @@ func (s *server) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*
 	// 返回结果
 	return &pb.ChangeEmailResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -1536,7 +1537,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 	if req.UserId <= 0 {
 		return &pb.ChangePhoneNumberResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserInvalidParameter,
 				Msg:  "Invalid user ID",
 			},
 		}, nil
@@ -1549,7 +1550,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 		if err != nil || !matched {
 			return &pb.ChangePhoneNumberResponse{
 				Result: &pb.Result{
-					Code: 2,
+					Code: errorcode.UserInvalidParameter,
 					Msg:  "Invalid phone number format",
 				},
 			}, nil
@@ -1562,7 +1563,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 		if userInfoCache.UserId == -1 {
 			return &pb.ChangePhoneNumberResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1581,20 +1582,20 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 		if err != nil {
 			return &pb.ChangePhoneNumberResponse{
 				Result: &pb.Result{
-					Code: 4,
+					Code: errorcode.ServerInternalComponentError,
 					Msg:  "Internal error",
 				},
 			}, nil
 		}
 
 		// 检查SQL执行结果
-		if infoResp.Result.Code != 0 || len(infoResp.Data) == 0 {
+		if infoResp.Result.Code != errorcode.Success || len(infoResp.Data) == 0 {
 			go gateway.SetUserInfoCache(req.UserId, &pb.UserInfoCache{
 				UserId: -1,
 			})
 			return &pb.ChangePhoneNumberResponse{
 				Result: &pb.Result{
-					Code: 3,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1624,10 +1625,10 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.ChangePhoneNumberResponse{
 			Result: &pb.Result{
-				Code: 5,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -1637,7 +1638,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 	if resp.RowsAffected == 0 {
 		return &pb.ChangePhoneNumberResponse{
 			Result: &pb.Result{
-				Code: 6,
+				Code: errorcode.UserInternalError,
 				Msg:  "Failed to update phone number",
 			},
 		}, nil
@@ -1649,7 +1650,7 @@ func (s *server) ChangePhoneNumber(ctx context.Context, req *pb.ChangePhoneNumbe
 	// 返回结果
 	return &pb.ChangePhoneNumberResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 	}, nil
@@ -1666,14 +1667,14 @@ func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDR
 		if userInfoCache.UserId == -1 {
 			return &pb.GetUsernameByUIDResponse{
 				Result: &pb.Result{
-					Code: 1,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
 		}
 		return &pb.GetUsernameByUIDResponse{
 			Result: &pb.Result{
-				Code: 0,
+				Code: errorcode.Success,
 				Msg:  "",
 			},
 			Username: userInfoCache.Username,
@@ -1692,17 +1693,17 @@ func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDR
 	if err != nil {
 		return &pb.GetUsernameByUIDResponse{
 			Result: &pb.Result{
-				Code: 2,
-				Msg:  "Interal error",
+				Code: errorcode.ServerInternalComponentError,
+				Msg:  "Internal error",
 			},
 		}, nil
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.GetUsernameByUIDResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  "Internal error",
 			},
 		}, nil
@@ -1712,7 +1713,7 @@ func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDR
 	if len(resp.Data) == 0 {
 		return &pb.GetUsernameByUIDResponse{
 			Result: &pb.Result{
-				Code: 1,
+				Code: errorcode.UserNotFound,
 				Msg:  "User does not exist",
 			},
 		}, nil
@@ -1747,7 +1748,7 @@ func (s *server) GetUsernameByUID(ctx context.Context, req *pb.GetUsernameByUIDR
 	go gateway.SetUserInfoCache(userid, userInfoCache)
 	return &pb.GetUsernameByUIDResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 		Username: userInfo.Username,
@@ -1766,7 +1767,7 @@ func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameR
 		if loginCache.UserId < 0 {
 			return &pb.GetUIDByUsernameResponse{
 				Result: &pb.Result{
-					Code: 1,
+					Code: errorcode.UserNotFound,
 					Msg:  "User does not exist",
 				},
 			}, nil
@@ -1775,7 +1776,7 @@ func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameR
 		userID := loginCache.UserId
 		return &pb.GetUIDByUsernameResponse{
 			Result: &pb.Result{
-				Code: 0,
+				Code: errorcode.Success,
 				Msg:  "",
 			},
 			UserId: userID,
@@ -1794,17 +1795,17 @@ func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameR
 	if err != nil {
 		return &pb.GetUIDByUsernameResponse{
 			Result: &pb.Result{
-				Code: 2,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  "Internal error",
 			},
 		}, nil
 	}
 
 	// 检查SQL执行结果
-	if resp.Result.Code != 0 {
+	if resp.Result.Code != errorcode.Success {
 		return &pb.GetUIDByUsernameResponse{
 			Result: &pb.Result{
-				Code: 3,
+				Code: errorcode.ServerInternalComponentError,
 				Msg:  resp.Result.Msg,
 			},
 		}, nil
@@ -1819,7 +1820,7 @@ func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameR
 		go gateway.SetUserInfoCache(userInfoCache.UserId, userInfoCache)
 		return &pb.GetUIDByUsernameResponse{
 			Result: &pb.Result{
-				Code: 4,
+				Code: errorcode.UserNotFound,
 				Msg:  "User does not exist or has been disabled",
 			},
 		}, nil
@@ -1846,7 +1847,7 @@ func (s *server) GetUIDByUsername(ctx context.Context, req *pb.GetUIDByUsernameR
 	go gateway.SetUserLoginCache(loginCache)
 	return &pb.GetUIDByUsernameResponse{
 		Result: &pb.Result{
-			Code: 0,
+			Code: errorcode.Success,
 			Msg:  "",
 		},
 		UserId: userID,
