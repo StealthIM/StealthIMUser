@@ -258,7 +258,7 @@ async def test_login_wrong_password(stub: StealthIMUserStub) -> None:
 @pytest.mark.asyncio
 async def test_login_nonexistent_user(stub: StealthIMUserStub) -> None:
     """测试使用不存在的用户名登录"""
-    nonexistent_user = f"nonexistent_{int(time.time())}"
+    nonexistent_user = f"nex_{int(time.time())}"
     request: LoginRequest = LoginRequest(
         username=nonexistent_user,
         password="anypassword"
@@ -281,7 +281,7 @@ async def test_get_user_info_invalid_id(stub: StealthIMUserStub) -> None:
 @pytest.mark.asyncio
 async def test_get_other_user_info_nonexistent(stub: StealthIMUserStub) -> None:
     """测试获取不存在的用户的公开信息"""
-    nonexistent_user = f"nonexistent_{int(time.time())}"
+    nonexistent_user = f"nex_{int(time.time())}"
     request: GetOtherUserInfoRequest = GetOtherUserInfoRequest(
         username=nonexistent_user)
     response: GetOtherUserInfoResponse = await stub.GetOtherUserInfo(request)

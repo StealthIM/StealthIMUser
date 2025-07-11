@@ -168,15 +168,14 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 			go gateway.SetUserLoginCache(loginCache)
 
 			if true {
-				break
+				return &pb.RegisterResponse{
+					Result: &pb.Result{
+						Code: errorcode.UserAlreadyExists,
+						Msg:  "User already exists",
+					},
+				}, nil
 			}
 		}
-		return &pb.RegisterResponse{
-			Result: &pb.Result{
-				Code: errorcode.UserAlreadyExists,
-				Msg:  "User already exists",
-			},
-		}, nil
 	}
 
 	// 生成盐值和加密密码
