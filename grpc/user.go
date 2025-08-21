@@ -440,7 +440,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	getSessionRet := make(chan string, 1)
 	go func() {
 		getSessionRet <- (func() string {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			resp, err := session.SetSession(ctx, &pbsession.SetRequest{
 				Uid: userID,
