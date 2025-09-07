@@ -45,7 +45,7 @@ func checkAlive(connID int) {
 		mainlock.RLock()
 		if conns[connID] != nil {
 			cli := pb.NewStealthIMDBGatewayClient(conns[connID])
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			_, err := cli.Ping(ctx, &pb.PingRequest{})
 			cancel()
 			if err == nil {
